@@ -1,0 +1,57 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/8366d8b8-3179-46df-abeb-e6fcde4078cf')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/8366d8b8-3179-46df-abeb-e6fcde4078cf')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "apiVersion": "2022-11-01-preview",
+            "properties": {
+                "displayName": "UC051697 - Policy audit changed",
+                "description": "Detects that a computer's system level audit policy was modified (Event ID 4719).",
+                "severity": "High",
+                "enabled": true,
+                "query": "let Mango = view () {\n    workspace(\"4d082081-7c2a-4f57-b848-bd64e5c72859\").SecurityEvent\n    | where EventID == 4719\n};\nunion withsource=\"TenantDetection\" Mango",
+                "queryFrequency": "PT15M",
+                "queryPeriod": "PT15M",
+                "triggerOperator": "GreaterThan",
+                "triggerThreshold": 0,
+                "suppressionDuration": "PT5H",
+                "suppressionEnabled": false,
+                "tactics": [],
+                "techniques": [],
+                "alertRuleTemplateName": null,
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": true,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "P1D",
+                        "matchingMethod": "Selected",
+                        "groupByEntities": [],
+                        "groupByAlertDetails": [],
+                        "groupByCustomDetails": [
+                            "Cliente"
+                        ]
+                    }
+                },
+                "eventGroupingSettings": {
+                    "aggregationKind": "AlertPerResult"
+                },
+                "alertDetailsOverride": null,
+                "customDetails": {
+                    "Cliente": "TenantDetection"
+                },
+                "entityMappings": null,
+                "sentinelEntitiesMappings": null
+            }
+        }
+    ]
+}
