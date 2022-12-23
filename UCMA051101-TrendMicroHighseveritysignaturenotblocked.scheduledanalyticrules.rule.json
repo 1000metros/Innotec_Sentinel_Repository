@@ -1,0 +1,79 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "metadata": {
+                "description": "Log Analytics Workspace Name"
+            },
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers/', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/b584c659-c240-441a-a4a6-d0b75bd8f1e3')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/b584c659-c240-441a-a4a6-d0b75bd8f1e3')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "properties": {
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": true,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "P1D",
+                        "matchingMethod": "Selected",
+                        "groupByEntities": [
+                            "Host",
+                            "IP"
+                        ],
+                    "groupByAlertDetails": [],
+                    "groupByCustomDetails": [
+                        "Cliente"
+                    ]
+                }
+            },
+            "customDetails": {
+                "Cliente": "TenantDetection"
+            },
+            "entityMappings": [
+                {
+                    "entityType": "Host",
+                    "fieldMappings": [
+                        {
+                            "identifier": "FullName",
+                            "columnName": "endpoint_name_s"
+                        }
+                    ]
+                },
+                {
+                    "entityType": "IP",
+                    "fieldMappings": [
+                        {
+                            "identifier": "Address",
+                            "columnName": "endpoint_ips_s"
+                        }
+                    ]
+                }
+            ],
+            "queryFrequency": "PT15M",
+            "queryPeriod": "PT15M",
+            "triggerOperator": "GreaterThan",
+            "triggerThreshold": 0,
+            "eventGroupingSettings": {
+                "aggregationKind": "AlertPerResult"
+            },
+            "severity": "Medium",
+            "query": "let Mango = view () {\r\n    let ruleNameExclusion = Mango_UCMA051101_exclusion | project ruleName_s;\r\n    let subRuleNameExclusion = Mango_UCMA051101_exclusion | project subRuleName_s;\r\n    workspace(\"4d082081-7c2a-4f57-b848-bd64e5c72859\").TrendMicro_XDR_OAT_CL\r\n    | union workspace(\"4d082081-7c2a-4f57-b848-bd64e5c72859\").TrendMicro_XDR_RCA_Result_CL\r\n    | union workspace(\"4d082081-7c2a-4f57-b848-bd64e5c72859\").TrendMicro_XDR_RCA_Task_CL\r\n    | union workspace(\"4d082081-7c2a-4f57-b848-bd64e5c72859\").TrendMicro_XDR_WORKBENCH_CL\r\n    | where ruleId_d between (1000000 .. 1999999) and Severity == 8 \r\n    | where ruleName_s !in (ruleNameExclusion)\r\n    | where subRuleName_s !in (subRuleNameExclusion)\r\n\t| summarize by endpoint_name_s, endpoint_ips_s, ruleName_s, subRuleName_s, Severity \r\n};\r\nunion withsource=\"TenantDetection\"  Mango",
+            "suppressionDuration": "PT5H",
+            "suppressionEnabled": false,
+        "tactics": [],
+        "displayName": "UCMA051101 - Trend Micro High severity signature not blocked",
+        "enabled": true,
+        "description": "Detects IPS intrusions that are classified as high severity and are not blocked, with signatureID between 1,000,000 and 1,999,999 (Trend Micro IPS rule), the signature ID is the same as the IPS rule ID.",
+        "alertRuleTemplateName": null
+    },
+    "apiVersion": "2021-09-01-preview"
+}
+]
+}

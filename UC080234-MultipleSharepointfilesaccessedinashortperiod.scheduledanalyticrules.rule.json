@@ -1,0 +1,69 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "metadata": {
+                "description": "Log Analytics Workspace Name"
+            },
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers/', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/020f9226-3161-468b-9131-b0e6d433ae60')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/020f9226-3161-468b-9131-b0e6d433ae60')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "properties": {
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": true,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "P1D",
+                        "matchingMethod": "Selected",
+                        "groupByEntities": [
+                            "Account"
+                        ],
+                    "groupByAlertDetails": [],
+                    "groupByCustomDetails": [
+                        "Cliente"
+                    ]
+                }
+            },
+            "customDetails": {
+                "Cliente": "TenantDetection"
+            },
+            "entityMappings": [
+                {
+                    "entityType": "Account",
+                    "fieldMappings": [
+                        {
+                            "identifier": "FullName",
+                            "columnName": "UserId"
+                        }
+                    ]
+                }
+            ],
+            "queryFrequency": "PT10M",
+            "queryPeriod": "PT10M",
+            "triggerOperator": "GreaterThan",
+            "triggerThreshold": 0,
+            "eventGroupingSettings": {
+                "aggregationKind": "AlertPerResult"
+            },
+            "severity": "Low",
+            "query": "let Mango = view () {\r\nlet UserId_exclusion = Mango_UC080234_exclusion_users | project UserId;\r\n    workspace(\"4d082081-7c2a-4f57-b848-bd64e5c72859\").OfficeActivity\r\n\t| where RecordType == \"SharePointFileOperation\" and Operation == \"FileAccessed\"\r\n    | where UserId !in (UserId_exclusion)\r\n    | summarize ['Number of Files Accesed']=dcount(SourceFileName), ['Files']=make_set(SourceFileName) by UserId\r\n    | where ['Number of Files Accesed'] >= 200\r\n\t};\r\nunion withsource=\"TenantDetection\"  Mango",
+            "suppressionDuration": "PT5H",
+            "suppressionEnabled": false,
+        "tactics": [],
+        "displayName": "UC080234 - Multiple Sharepoint files accessed in a short period",
+        "enabled": true,
+        "description": "Detecta el acceso a múltiples archivos de sharepoint en un corto periodo de tiempo",
+        "alertRuleTemplateName": null
+    },
+    "apiVersion": "2021-09-01-preview"
+}
+]
+}

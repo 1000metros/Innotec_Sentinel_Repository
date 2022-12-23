@@ -1,0 +1,69 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "metadata": {
+                "description": "Log Analytics Workspace Name"
+            },
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers/', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/bb4ef0c6-ad61-4f5c-8e8b-e8d6b2785c05')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/bb4ef0c6-ad61-4f5c-8e8b-e8d6b2785c05')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "properties": {
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": true,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "P1D",
+                        "matchingMethod": "Selected",
+                        "groupByEntities": [
+                            "Account"
+                        ],
+                    "groupByAlertDetails": [],
+                    "groupByCustomDetails": [
+                        "Cliente"
+                    ]
+                }
+            },
+            "customDetails": {
+                "Cliente": "TenantDetection"
+            },
+            "entityMappings": [
+                {
+                    "entityType": "Account",
+                    "fieldMappings": [
+                        {
+                            "identifier": "FullName",
+                            "columnName": "UserId"
+                        }
+                    ]
+                }
+            ],
+            "queryFrequency": "PT6H",
+            "queryPeriod": "P1D",
+            "triggerOperator": "GreaterThan",
+            "triggerThreshold": 0,
+            "eventGroupingSettings": {
+                "aggregationKind": "AlertPerResult"
+            },
+            "severity": "Medium",
+            "query": "let time_ago = 1d;\r\nlet Mango = view () {\r\n\tworkspace(\"4d082081-7c2a-4f57-b848-bd64e5c72859\").OfficeActivity\r\n\t| where TimeGenerated > ago(time_ago)\r\n\t| where RecordType == \"MicrosoftTeams\" and Operation == \"MemberAdded\" \r\n\t| where UserType == \"Regular\" and UserId contains \"ext\"\r\n\t| project TimeAdded=TimeGenerated, UserId, Operation, ItemName\r\n\t| join (\r\n\tworkspace(\"4d082081-7c2a-4f57-b848-bd64e5c72859\").OfficeActivity\r\n\t| where TimeGenerated > ago(time_ago)\r\n\t| where RecordType == \"MicrosoftTeams\" and Operation == \"MemberRemoved\" \r\n\t| where UserType == \"Regular\" and UserId contains \"ext\"\r\n\t| project TimeDeleted=TimeGenerated, Operation, UserId, ItemName) on UserId, ItemName\r\n\t| project TimeAdded, TimeDeleted, UserId, ItemName\r\n\t| extend timestamp = TimeAdded\r\n};\r\nunion withsource=\"TenantDetection\"  Mango\r\n",
+            "suppressionDuration": "PT5H",
+            "suppressionEnabled": false,
+        "tactics": [],
+        "displayName": "UC070353 - External users added and removed from Teams",
+        "enabled": true,
+        "description": "",
+        "alertRuleTemplateName": null
+    },
+    "apiVersion": "2021-09-01-preview"
+}
+]
+}

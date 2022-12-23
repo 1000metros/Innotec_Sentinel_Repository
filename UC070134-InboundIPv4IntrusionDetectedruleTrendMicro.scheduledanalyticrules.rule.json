@@ -1,0 +1,71 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "metadata": {
+                "description": "Log Analytics Workspace Name"
+            },
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers/', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/b79c16ed-fe9f-4e93-8aaa-1d07f9cadc58')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/b79c16ed-fe9f-4e93-8aaa-1d07f9cadc58')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "properties": {
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": true,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "P1D",
+                        "matchingMethod": "Selected",
+                        "groupByEntities": [
+                            "IP"
+                        ],
+                    "groupByAlertDetails": [],
+                    "groupByCustomDetails": [
+                        "Cliente"
+                    ]
+                }
+            },
+            "customDetails": {
+                "Cliente": "TenantDetection"
+            },
+            "entityMappings": [
+                {
+                    "entityType": "IP",
+                    "fieldMappings": [
+                        {
+                            "identifier": "Address",
+                            "columnName": "src_s"
+                        }
+                    ]
+                }
+            ],
+            "queryFrequency": "PT15M",
+            "queryPeriod": "PT15M",
+            "triggerOperator": "GreaterThan",
+            "triggerThreshold": 0,
+            "eventGroupingSettings": {
+                "aggregationKind": "AlertPerResult"
+            },
+            "severity": "Medium",
+            "query": "let Mango = view () {\r\n    workspace(\"4d082081-7c2a-4f57-b848-bd64e5c72859\").TrendMicro_XDR_OAT_CL\r\n    | union workspace(\"4d082081-7c2a-4f57-b848-bd64e5c72859\").TrendMicro_XDR_RCA_Result_CL\r\n    | union workspace(\"4d082081-7c2a-4f57-b848-bd64e5c72859\").TrendMicro_XDR_RCA_Task_CL\r\n    | union workspace(\"4d082081-7c2a-4f57-b848-bd64e5c72859\").TrendMicro_XDR_WORKBENCH_CL\r\n    | where ruleId_d between (1000000 .. 1999999)\r\n    | where ipv4_is_private(dst_s) and not(ipv4_is_private(src_s)) \r\n};\r\nunion withsource=\"TenantDetection\" Mango\r\n",
+            "suppressionDuration": "PT5H",
+            "suppressionEnabled": false,
+            "tactics": [
+                "Impact"
+            ],
+            "displayName": "UC070134 - Inbound IPv4 Intrusion Detected rule TrendMicro",
+            "enabled": true,
+            "description": "Detects possible intrusions from a public source IPv4 to a private destination IPv4 that are not blocked, with signatureID between 1,000,000 and 1,999,999 (Trend Micro IPS rule), the signature ID is the same as the IPS rule ID.\n",
+            "alertRuleTemplateName": null
+        },
+        "apiVersion": "2021-09-01-preview"
+    }
+]
+}

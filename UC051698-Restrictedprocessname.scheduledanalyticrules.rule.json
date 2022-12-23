@@ -1,0 +1,79 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "metadata": {
+                "description": "Log Analytics Workspace Name"
+            },
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers/', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/d2f1877d-756b-47ab-bafd-e98debdad0bf')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/d2f1877d-756b-47ab-bafd-e98debdad0bf')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "properties": {
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": true,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "P1D",
+                        "matchingMethod": "Selected",
+                        "groupByEntities": [
+                            "Process",
+                            "Account"
+                        ],
+                    "groupByAlertDetails": [],
+                    "groupByCustomDetails": [
+                        "Cliente"
+                    ]
+                }
+            },
+            "customDetails": {
+                "Cliente": "TenantDetection"
+            },
+            "entityMappings": [
+                {
+                    "entityType": "Process",
+                    "fieldMappings": [
+                        {
+                            "identifier": "ProcessId",
+                            "columnName": "Process"
+                        }
+                    ]
+                },
+                {
+                    "entityType": "Account",
+                    "fieldMappings": [
+                        {
+                            "identifier": "Name",
+                            "columnName": "Account"
+                        }
+                    ]
+                }
+            ],
+            "queryFrequency": "PT15M",
+            "queryPeriod": "PT15M",
+            "triggerOperator": "GreaterThan",
+            "triggerThreshold": 0,
+            "eventGroupingSettings": {
+                "aggregationKind": "AlertPerResult"
+            },
+            "severity": "High",
+            "query": "let Mango = view () {\n    let Blacklist = toscalar(Mango_Blacklist_ExecutableName | summarize make_set(MatchString));\n    let Events = workspace(\"4d082081-7c2a-4f57-b848-bd64e5c72859\").SecurityEvent\n    | where EventID == 4625 and (isnotnull(Process) and isnotempty(Process) and Process != \"-\");\n    Events\n    | mv-apply BlacklistMatch = Blacklist on (\n            where Process contains BlacklistMatch\n    )\n    | summarize occurrences = count() by tostring(Account), Process, tostring(BlacklistMatch)\n};\nunion withsource=\"TenantDetection\" Mango",
+            "suppressionDuration": "PT5H",
+            "suppressionEnabled": false,
+        "tactics": [],
+        "displayName": "UC051698 - Restricted process name",
+        "enabled": true,
+        "description": "Detects failed logins (Event ID 4625) where a process contains a restricted set of words (e.g, mimikatz or cain.exe) taken from a blacklist.",
+        "alertRuleTemplateName": null
+    },
+    "apiVersion": "2021-09-01-preview"
+}
+]
+}

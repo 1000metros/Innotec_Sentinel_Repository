@@ -1,0 +1,51 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "metadata": {
+                "description": "Log Analytics Workspace Name"
+            },
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers/', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/0c310d78-3de0-4573-ab83-b7ccea9ca54b')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/0c310d78-3de0-4573-ab83-b7ccea9ca54b')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "properties": {
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": false,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "PT5H",
+                        "matchingMethod": "AllEntities",
+                    "groupByEntities": [],
+                "groupByAlertDetails": [],
+            "groupByCustomDetails": []
+        }
+    },
+    "queryFrequency": "PT1H",
+    "queryPeriod": "PT1H",
+    "triggerOperator": "GreaterThan",
+    "triggerThreshold": 0,
+    "eventGroupingSettings": {
+        "aggregationKind": "SingleAlert"
+    },
+    "severity": "Low",
+    "query": "let Mango = view () {\n    workspace(\"4d082081-7c2a-4f57-b848-bd64e5c72859\").SecurityAlert\n    | where ProductName == \"Office 365 Advanced Threat Protection\" and AlertSeverity == \"Low\" and Status in (\"New\", \"Active\")\n};\nunion withsource=\"TenantDetection\"  Mango\n",
+    "suppressionDuration": "PT5H",
+    "suppressionEnabled": false,
+"tactics": [],
+"displayName": "UC051717 - Microsoft Defender for Office 365 Low Severity Alert Detection",
+"enabled": true,
+"description": " Microsoft Defender for Office 365 Low Severity Alert Detection",
+"alertRuleTemplateName": null
+},
+"apiVersion": "2021-09-01-preview"
+}
+]
+}

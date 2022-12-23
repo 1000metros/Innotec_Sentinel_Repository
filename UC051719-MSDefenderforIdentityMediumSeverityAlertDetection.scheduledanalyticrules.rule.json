@@ -1,0 +1,56 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "metadata": {
+                "description": "Log Analytics Workspace Name"
+            },
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers/', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/7466c000-3409-4c12-87ed-303e192d2f22')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/7466c000-3409-4c12-87ed-303e192d2f22')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "properties": {
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": true,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "PT8H",
+                        "matchingMethod": "Selected",
+                    "groupByEntities": [],
+                "groupByAlertDetails": [],
+                "groupByCustomDetails": [
+                    "Cliente"
+                ]
+            }
+        },
+        "customDetails": {
+            "Cliente": "TenantDetection"
+        },
+        "queryFrequency": "PT8H",
+        "queryPeriod": "PT8H",
+        "triggerOperator": "GreaterThan",
+        "triggerThreshold": 0,
+        "eventGroupingSettings": {
+            "aggregationKind": "AlertPerResult"
+        },
+        "severity": "Medium",
+        "query": "let Mango = view () {\r\n    workspace(\"4d082081-7c2a-4f57-b848-bd64e5c72859\").SecurityAlert\r\n\t| where ProductName == \"Azure Advanced Threat Protection\" and Status == \"New\" and AlertSeverity == \"Medium\"\r\n}; \r\nunion withsource=\"TenantDetection\"  Mango",
+        "suppressionDuration": "PT5H",
+        "suppressionEnabled": false,
+    "tactics": [],
+    "displayName": "UC051719 - MS Defender for Identity Medium Severity Alert Detection",
+    "enabled": true,
+    "description": "Detección de alertas de severidad media de la solución MS Defender For Identity",
+    "alertRuleTemplateName": null
+},
+"apiVersion": "2021-09-01-preview"
+}
+]
+}

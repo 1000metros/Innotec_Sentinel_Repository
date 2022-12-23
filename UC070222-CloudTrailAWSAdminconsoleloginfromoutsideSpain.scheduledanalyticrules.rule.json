@@ -1,0 +1,79 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "metadata": {
+                "description": "Log Analytics Workspace Name"
+            },
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers/', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/f021dd15-2f4d-4dd0-b85f-89d2ccd966f2')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/f021dd15-2f4d-4dd0-b85f-89d2ccd966f2')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "properties": {
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": true,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "P1D",
+                        "matchingMethod": "Selected",
+                        "groupByEntities": [
+                            "IP",
+                            "Account"
+                        ],
+                    "groupByAlertDetails": [],
+                    "groupByCustomDetails": [
+                        "Cliente"
+                    ]
+                }
+            },
+            "customDetails": {
+                "Cliente": "TenantDetection"
+            },
+            "entityMappings": [
+                {
+                    "entityType": "IP",
+                    "fieldMappings": [
+                        {
+                            "identifier": "Address",
+                            "columnName": "SourceIpAddress"
+                        }
+                    ]
+                },
+                {
+                    "entityType": "Account",
+                    "fieldMappings": [
+                        {
+                            "identifier": "FullName",
+                            "columnName": "UserIdentityPrincipalid"
+                        }
+                    ]
+                }
+            ],
+            "queryFrequency": "PT15M",
+            "queryPeriod": "PT15M",
+            "triggerOperator": "GreaterThan",
+            "triggerThreshold": 0,
+            "eventGroupingSettings": {
+                "aggregationKind": "AlertPerResult"
+            },
+            "severity": "High",
+            "query": "let IP_Data = IPv4_Country_Ranges;\nlet Mango = view () {\n    workspace(\"4d082081-7c2a-4f57-b848-bd64e5c72859\").AWSCloudTrail\n    | where EventName == \"ConsoleLogin\"\n    | where not(ipv4_is_private(SourceIpAddress))\n    | where UserIdentityArn contains \"dmin\"\n    | evaluate ipv4_lookup(IP_Data, SourceIpAddress, network, return_unmatched = true)\n    | summarize count() by SourceIpAddress, country_iso_code, UserIdentityPrincipalid, UserIdentityArn\n    | where country_iso_code != \"ES\"\n};\nunion withsource=\"TenantDetection\" Mango",
+            "suppressionDuration": "PT5H",
+            "suppressionEnabled": false,
+        "tactics": [],
+        "displayName": "UC070222 - CloudTrail AWS Admin console login from outside Spain",
+        "enabled": true,
+        "description": "Autenticación en la consola de AWS con un usuario con permisos de administración desde una dirección IP no perteneciente a España.",
+        "alertRuleTemplateName": null
+    },
+    "apiVersion": "2021-09-01-preview"
+}
+]
+}

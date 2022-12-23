@@ -1,0 +1,51 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "metadata": {
+                "description": "Log Analytics Workspace Name"
+            },
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers/', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/ff92445c-8d15-4e54-a042-671b2b63d18c')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/ff92445c-8d15-4e54-a042-671b2b63d18c')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "properties": {
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": false,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "PT5H",
+                        "matchingMethod": "AllEntities",
+                    "groupByEntities": [],
+                "groupByAlertDetails": [],
+            "groupByCustomDetails": []
+        }
+    },
+    "queryFrequency": "PT5M",
+    "queryPeriod": "PT5M",
+    "triggerOperator": "GreaterThan",
+    "triggerThreshold": 0,
+    "eventGroupingSettings": {
+        "aggregationKind": "SingleAlert"
+    },
+    "severity": "Medium",
+    "query": "//Variables\r\nlet AddEvents = dynamic ([4732, 4728, 4756, 4746, 4751, 4761]);\r\nlet RemoveEvents = dynamic ([4733, 4729, 4757, 4747, 4752, 4762]);\r\nlet AdminsGroups = Mango_UC051292_AdminsGroups | project TargetUserName;\r\nlet Mango = view () {\r\nworkspace(\"4d082081-7c2a-4f57-b848-bd64e5c72859\").SecurityEvent\r\n| where EventID in (AddEvents) or EventID in (RemoveEvents)\r\n| where TargetUserName in (AdminsGroups)\r\n| summarize by TimeGenerated, Computer, SubjectUserName,ModifiedGroup = TargetUserName, ModifiedUser = MemberName, EventID, Activity\r\n| order by TimeGenerated desc\r\n};\r\nunion withsource=\"TenantDetection\" Mango",
+    "suppressionDuration": "PT5H",
+    "suppressionEnabled": false,
+"tactics": [],
+"displayName": "UC051326 - Modification in membership of domain administrator groups",
+"enabled": true,
+"description": "Modification of domain administrator group memberships",
+"alertRuleTemplateName": null
+},
+"apiVersion": "2021-09-01-preview"
+}
+]
+}

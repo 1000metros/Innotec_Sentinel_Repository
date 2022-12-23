@@ -1,0 +1,79 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "metadata": {
+                "description": "Log Analytics Workspace Name"
+            },
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers/', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/5cf60def-dea2-40ec-834f-84bc7f95ae06')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/5cf60def-dea2-40ec-834f-84bc7f95ae06')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "properties": {
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": true,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "P1D",
+                        "matchingMethod": "Selected",
+                        "groupByEntities": [
+                            "Account",
+                            "Host"
+                        ],
+                    "groupByAlertDetails": [],
+                    "groupByCustomDetails": [
+                        "Cliente"
+                    ]
+                }
+            },
+            "customDetails": {
+                "Cliente": "TenantDetection"
+            },
+            "entityMappings": [
+                {
+                    "entityType": "Account",
+                    "fieldMappings": [
+                        {
+                            "identifier": "FullName",
+                            "columnName": "AccountCustomEntity"
+                        }
+                    ]
+                },
+                {
+                    "entityType": "Host",
+                    "fieldMappings": [
+                        {
+                            "identifier": "FullName",
+                            "columnName": "HostCustomEntity"
+                        }
+                    ]
+                }
+            ],
+            "queryFrequency": "PT5H",
+            "queryPeriod": "PT5H",
+            "triggerOperator": "GreaterThan",
+            "triggerThreshold": 0,
+            "eventGroupingSettings": {
+                "aggregationKind": "SingleAlert"
+            },
+            "severity": "Medium",
+            "query": "let Mango = view () {\r\nworkspace(\"4d082081-7c2a-4f57-b848-bd64e5c72859\").SecurityEvent | where CommandLine contains \"wevtutil cl\"\r\n| extend AccountCustomEntity = AccountName\r\n| extend HostCustomEntity = Computer\r\n};\r\nunion withsource=\"TenantDetection\"  Mango\r\n",
+            "suppressionDuration": "PT5H",
+            "suppressionEnabled": false,
+        "tactics": [],
+        "displayName": "UC080320 - Eventlog cleared",
+        "enabled": true,
+        "description": "",
+        "alertRuleTemplateName": null
+    },
+    "apiVersion": "2021-09-01-preview"
+}
+]
+}

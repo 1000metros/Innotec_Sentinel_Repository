@@ -1,0 +1,56 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "metadata": {
+                "description": "Log Analytics Workspace Name"
+            },
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers/', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/fec59a27-fe69-49a9-a733-13704f62f9ec')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/fec59a27-fe69-49a9-a733-13704f62f9ec')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "properties": {
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": true,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "PT8H",
+                        "matchingMethod": "Selected",
+                    "groupByEntities": [],
+                "groupByAlertDetails": [],
+                "groupByCustomDetails": [
+                    "Cliente"
+                ]
+            }
+        },
+        "customDetails": {
+            "Cliente": "TenantDetection"
+        },
+        "queryFrequency": "PT8H",
+        "queryPeriod": "PT8H",
+        "triggerOperator": "GreaterThan",
+        "triggerThreshold": 0,
+        "eventGroupingSettings": {
+            "aggregationKind": "SingleAlert"
+        },
+        "severity": "Medium",
+        "query": "let Mango = view () {\r\n\tworkspace(\"4d082081-7c2a-4f57-b848-bd64e5c72859\").SecurityAlert\r\n\t| where ProductName == \"Azure Security Center\" and Status == \"New\" and AlertSeverity == \"Medium\"\r\n}; \r\nunion withsource=\"TenantDetection\"  Mango",
+        "suppressionDuration": "PT5H",
+        "suppressionEnabled": false,
+    "tactics": [],
+    "displayName": "UC051722 - MS Defender for Cloud Medium Severity Alert Detection",
+    "enabled": true,
+    "description": "Detección de alertas de severidad media de la solución MS Defender for Cloud",
+    "alertRuleTemplateName": null
+},
+"apiVersion": "2021-09-01-preview"
+}
+]
+}

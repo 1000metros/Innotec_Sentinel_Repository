@@ -1,0 +1,78 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "metadata": {
+                "description": "Log Analytics Workspace Name"
+            },
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers/', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/a311c7d1-869c-4dcd-9eae-7ea41392b445')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/a311c7d1-869c-4dcd-9eae-7ea41392b445')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "properties": {
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": true,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "P1D",
+                        "matchingMethod": "Selected",
+                        "groupByEntities": [
+                            "Account"
+                        ],
+                    "groupByAlertDetails": [],
+                    "groupByCustomDetails": [
+                        "Cliente"
+                    ]
+                }
+            },
+            "customDetails": {
+                "Cliente": "TenantDetection"
+            },
+            "entityMappings": [
+                {
+                    "entityType": "Account",
+                    "fieldMappings": [
+                        {
+                            "identifier": "FullName",
+                            "columnName": "SourceUserName"
+                        }
+                    ]
+                },
+                {
+                    "entityType": "Account",
+                    "fieldMappings": [
+                        {
+                            "identifier": "FullName",
+                            "columnName": "DestinationUserName"
+                        }
+                    ]
+                }
+            ],
+            "queryFrequency": "PT15M",
+            "queryPeriod": "PT15M",
+            "triggerOperator": "GreaterThan",
+            "triggerThreshold": 0,
+            "eventGroupingSettings": {
+                "aggregationKind": "AlertPerResult"
+            },
+            "severity": "Low",
+            "query": "let Mango = view () {\n\tworkspace(\"4d082081-7c2a-4f57-b848-bd64e5c72859\").CommonSecurityLog \n\t| where DeviceVendor == \"Thycotic Software\" and (SourceUserName contains \"bga_pmp\" or DestinationUserName contains \"bga_pmp\")\n};\nunion withsource=\"TenantDetection\" Mango",
+            "suppressionDuration": "PT5H",
+            "suppressionEnabled": false,
+        "tactics": [],
+        "displayName": "UCMA050201 - PAM BGA_pmp user related activity",
+        "enabled": true,
+        "description": "Actividad del usuario BGA_bmp. Este usuario no se utiliza salvo ocasiones muy especiales y contadas. Debe ser consultada siempre la legitimidad de las acciones con el cliente.",
+        "alertRuleTemplateName": null
+    },
+    "apiVersion": "2021-09-01-preview"
+}
+]
+}

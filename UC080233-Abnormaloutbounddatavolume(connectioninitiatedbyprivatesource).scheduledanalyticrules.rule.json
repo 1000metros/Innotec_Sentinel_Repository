@@ -1,0 +1,78 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "metadata": {
+                "description": "Log Analytics Workspace Name"
+            },
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers/', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/ed528a05-9560-490a-9af6-b6cfe6139e5f')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/ed528a05-9560-490a-9af6-b6cfe6139e5f')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "properties": {
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": true,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "P1D",
+                        "matchingMethod": "Selected",
+                        "groupByEntities": [
+                            "IP"
+                        ],
+                    "groupByAlertDetails": [],
+                    "groupByCustomDetails": [
+                        "Cliente"
+                    ]
+                }
+            },
+            "customDetails": {
+                "Cliente": "TenantDetection"
+            },
+            "entityMappings": [
+                {
+                    "entityType": "IP",
+                    "fieldMappings": [
+                        {
+                            "identifier": "Address",
+                            "columnName": "SourceIP"
+                        }
+                    ]
+                },
+                {
+                    "entityType": "IP",
+                    "fieldMappings": [
+                        {
+                            "identifier": "Address",
+                            "columnName": "DestinationIP"
+                        }
+                    ]
+                }
+            ],
+            "queryFrequency": "PT1H",
+            "queryPeriod": "PT1H",
+            "triggerOperator": "GreaterThan",
+            "triggerThreshold": 0,
+            "eventGroupingSettings": {
+                "aggregationKind": "AlertPerResult"
+            },
+            "severity": "Medium",
+            "query": "let timeframe = 1h;\r\nlet Mango = view () {\r\n    let DestinationIPExclusion = Mango_UC080233_exclusion_destinatioip | project DestinationIP;\r\n    let SourceIPExclusion = Mango_UC080233_exclusion_SourceIP | project SourceIP;\r\n    let SAMUserExclusion = Mango_UC080233_exclusion_samaccountname_2 | project samaccountname;\r\n    let SAMUserExclusion_wetransfer_downloading = Mango_UC080233_exclusion_samaccountname_userprincipalname | project samaccountname;\r\n\tworkspace(\"4d082081-7c2a-4f57-b848-bd64e5c72859\").CommonSecurityLog \r\n\t| where (DeviceVendor == \"Fortinet\" or DeviceVendor == \"Palo Alto Networks\") and (isnotnull(SentBytes) and isnotempty(SentBytes))\r\n\t| where ipv4_is_private(SourceIP) and not(ipv4_is_private(DestinationIP))\r\n\t| where DestinationIP !in (DestinationIPExclusion)\r\n    | where SourceIP !in (SourceIPExclusion)\r\n    | where SourceUserName !in (SAMUserExclusion)\r\n\t| where ApplicationProtocol != \"wetransfer-downloading\" and SourceUserName !in (SAMUserExclusion_wetransfer_downloading)\r\n\t| summarize SentBytes = sum(SentBytes), ReceivedBytes = sum(ReceivedBytes) by SourceIP, DestinationIP, bin(TimeGenerated, timeframe)\r\n\t| where (SentBytes > 10000000000)\r\n};\r\nunion withsource=\"TenantDetection\"  Mango",
+            "suppressionDuration": "PT5H",
+            "suppressionEnabled": false,
+        "tactics": [],
+        "displayName": "UC080233 - Abnormal outbound data volume (connection initiated by private source)",
+        "enabled": true,
+        "description": "Monitors unusual volume of outgoing data started by a private IP.",
+        "alertRuleTemplateName": null
+    },
+    "apiVersion": "2021-09-01-preview"
+}
+]
+}

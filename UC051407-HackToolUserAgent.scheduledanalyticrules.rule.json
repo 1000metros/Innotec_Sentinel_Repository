@@ -1,0 +1,69 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "metadata": {
+                "description": "Log Analytics Workspace Name"
+            },
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers/', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/911e298c-948c-4bc1-82e7-f3d1da513610')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/911e298c-948c-4bc1-82e7-f3d1da513610')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "properties": {
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": true,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "P1D",
+                        "matchingMethod": "Selected",
+                        "groupByEntities": [
+                            "IP"
+                        ],
+                    "groupByAlertDetails": [],
+                    "groupByCustomDetails": [
+                        "Cliente"
+                    ]
+                }
+            },
+            "customDetails": {
+                "Cliente": "TenantDetection"
+            },
+            "entityMappings": [
+                {
+                    "entityType": "IP",
+                    "fieldMappings": [
+                        {
+                            "identifier": "Address",
+                            "columnName": "srcip_s"
+                        }
+                    ]
+                }
+            ],
+            "queryFrequency": "PT1H",
+            "queryPeriod": "PT1H",
+            "triggerOperator": "GreaterThan",
+            "triggerThreshold": 0,
+            "eventGroupingSettings": {
+                "aggregationKind": "SingleAlert"
+            },
+            "severity": "Medium",
+            "query": "let Mango = view () {\r\nworkspace(\"4d082081-7c2a-4f57-b848-bd64e5c72859\").Netskope_CL| where ((useragent_s contains \"(hydra)\" or useragent_s contains \" arachni/\" or useragent_s contains \" BFAC \" or useragent_s contains \" brutus \" or useragent_s contains \" cgichk \" or useragent_s contains \"core-project/1.0\" or useragent_s contains \" crimscanner/\" or useragent_s contains \"datacha0s\" or useragent_s contains \"dirbuster\" or useragent_s contains \"domino hunter\" or useragent_s contains \"dotdotpwn\" or useragent_s == \"FHScan Core\" or useragent_s contains \"floodgate\" or useragent_s contains \"get-minimal\" or useragent_s contains \"gootkit auto-rooter scanner\" or useragent_s contains \"grendel-scan\" or useragent_s contains \" inspath \" or useragent_s contains \"internet ninja\" or useragent_s contains \"jaascois\" or useragent_s contains \" zmeu \" or useragent_s contains \"masscan\" or useragent_s contains \" metis \" or useragent_s contains \"morfeus fucking scanner\" or useragent_s contains \"n-stealth\" or useragent_s contains \"nsauditor\" or useragent_s contains \"pmafind\" or useragent_s contains \"security scan\" or useragent_s contains \"springenwerk\" or useragent_s contains \"teh forest lobster\" or useragent_s contains \"toata dragostea\" or useragent_s contains \" vega/\" or useragent_s contains \"voideye\" or useragent_s contains \"webshag\" or useragent_s contains \"webvulnscan\" or useragent_s contains \" whcc/\" or useragent_s endswith \" Havij\" or useragent_s contains \"absinthe\" or useragent_s contains \"bsqlbf\" or useragent_s contains \"mysqloit\" or useragent_s contains \"pangolin\" or useragent_s contains \"sql power injector\" or useragent_s contains \"sqlmap\" or useragent_s contains \"sqlninja\" or useragent_s contains \"uil2pn\" or useragent_s == \"ruler\" or useragent_s == \"Mozilla/5.0 (Windows; U; Windows NT 5.1; pt-PT; rv:1.9.1.2) Gecko/20090729 Firefox/3.5.2 (.NET CLR 3.5.30729)\"))\r\n};\r\nunion withsource=\"TenantDetection\"  Mango\r\n",
+            "suppressionDuration": "PT5H",
+            "suppressionEnabled": false,
+        "tactics": [],
+        "displayName": " UC051407 - Hack Tool User Agent",
+        "enabled": true,
+        "description": "",
+        "alertRuleTemplateName": null
+    },
+    "apiVersion": "2021-09-01-preview"
+}
+]
+}

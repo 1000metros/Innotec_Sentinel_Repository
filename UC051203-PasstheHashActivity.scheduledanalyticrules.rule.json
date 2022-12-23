@@ -1,0 +1,69 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "metadata": {
+                "description": "Log Analytics Workspace Name"
+            },
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers/', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/94517642-5d07-4bca-b009-07d8f0466568')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/94517642-5d07-4bca-b009-07d8f0466568')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "properties": {
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": true,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "P1D",
+                        "matchingMethod": "Selected",
+                        "groupByEntities": [
+                            "Account"
+                        ],
+                    "groupByAlertDetails": [],
+                    "groupByCustomDetails": [
+                        "Cliente"
+                    ]
+                }
+            },
+            "customDetails": {
+                "Cliente": "TenantDetection"
+            },
+            "entityMappings": [
+                {
+                    "entityType": "Account",
+                    "fieldMappings": [
+                        {
+                            "identifier": "FullName",
+                            "columnName": "AccountCustomEntity"
+                        }
+                    ]
+                }
+            ],
+            "queryFrequency": "PT1H",
+            "queryPeriod": "PT1H",
+            "triggerOperator": "GreaterThan",
+            "triggerThreshold": 0,
+            "eventGroupingSettings": {
+                "aggregationKind": "SingleAlert"
+            },
+            "severity": "Medium",
+            "query": "let Mango = view () {\r\nworkspace(\"4d082081-7c2a-4f57-b848-bd64e5c72859\").SecurityEvent \r\n| where (EventID == \"4624\" and ((SubjectUserSid == \"S-1-0-0\" and LogonType == \"3\" and LogonProcessName == \"NtLmSsp \" and KeyLength == \"0\") or (LogonType == \"9\" and LogonProcessName == \"seclogo\"))) and ((Account !contains \"ANONYMOUS LOGON\"))\r\n| where LmPackageName != \"NTLM V2\" \r\n| extend AccountCustomEntity = Account\r\n};\r\nunion withsource=\"TenantDetection\"  Mango\r\n\r\n",
+            "suppressionDuration": "PT5H",
+            "suppressionEnabled": false,
+        "tactics": [],
+        "displayName": "UC051203 - Pass the Hash Activity",
+        "enabled": true,
+        "description": "",
+        "alertRuleTemplateName": null
+    },
+    "apiVersion": "2021-09-01-preview"
+}
+]
+}

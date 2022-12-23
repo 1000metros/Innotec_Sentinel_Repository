@@ -1,0 +1,69 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "metadata": {
+                "description": "Log Analytics Workspace Name"
+            },
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers/', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/0ec66e20-2edd-4237-ab39-768dcb1b934b')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/0ec66e20-2edd-4237-ab39-768dcb1b934b')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "properties": {
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": true,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "P1D",
+                        "matchingMethod": "Selected",
+                        "groupByEntities": [
+                            "Account"
+                        ],
+                    "groupByAlertDetails": [],
+                    "groupByCustomDetails": [
+                        "Cliente"
+                    ]
+                }
+            },
+            "customDetails": {
+                "Cliente": "TenantDetection"
+            },
+            "entityMappings": [
+                {
+                    "entityType": "Account",
+                    "fieldMappings": [
+                        {
+                            "identifier": "FullName",
+                            "columnName": "User"
+                        }
+                    ]
+                }
+            ],
+            "queryFrequency": "PT15M",
+            "queryPeriod": "PT15M",
+            "triggerOperator": "GreaterThan",
+            "triggerThreshold": 0,
+            "eventGroupingSettings": {
+                "aggregationKind": "AlertPerResult"
+            },
+            "severity": "Low",
+            "query": "let Mango = view () {\n\tworkspace(\"4d082081-7c2a-4f57-b848-bd64e5c72859\").CommonSecurityLog \n\t| where DeviceVendor == \"Thycotic Software\" and Activity == \"ROLE - ASSIGNUSERORGROUP\" and (FileName == \"MANGO_Administrator\" or FileName == \"Privileged_Administrator\" or FileName == \"Administrator\")\n    | extend User = DeviceCustomString2\n};\nunion withsource=\"TenantDetection\" Mango",
+            "suppressionDuration": "PT5H",
+            "suppressionEnabled": false,
+        "tactics": [],
+        "displayName": "UCMA050901 - PAM assigned role with privileged permissions",
+        "enabled": true,
+        "description": "Asignación de permisos privilegiados \"MANGO_Administrator\", \"Privileged_Administrator\" o \"Administrator\" a un usuario de PAM.",
+        "alertRuleTemplateName": null
+    },
+    "apiVersion": "2021-09-01-preview"
+}
+]
+}

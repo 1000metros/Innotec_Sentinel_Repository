@@ -1,0 +1,69 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "metadata": {
+                "description": "Log Analytics Workspace Name"
+            },
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers/', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/66ea33fb-e3dc-4463-872d-a7ccb1dbf0f3')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/66ea33fb-e3dc-4463-872d-a7ccb1dbf0f3')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "properties": {
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": true,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "P1D",
+                        "matchingMethod": "Selected",
+                        "groupByEntities": [
+                            "IP"
+                        ],
+                    "groupByAlertDetails": [],
+                    "groupByCustomDetails": [
+                        "Cliente"
+                    ]
+                }
+            },
+            "customDetails": {
+                "Cliente": "TenantDetection"
+            },
+            "entityMappings": [
+                {
+                    "entityType": "IP",
+                    "fieldMappings": [
+                        {
+                            "identifier": "Address",
+                            "columnName": "SourceIP"
+                        }
+                    ]
+                }
+            ],
+            "queryFrequency": "PT30M",
+            "queryPeriod": "PT30M",
+            "triggerOperator": "GreaterThan",
+            "triggerThreshold": 0,
+            "eventGroupingSettings": {
+                "aggregationKind": "AlertPerResult"
+            },
+            "severity": "Medium",
+            "query": "//Variables\r\nlet ExcludeIPs = \"172.29.65.100\";\r\nlet Mango = view () {   \r\n \tworkspace(\"4d082081-7c2a-4f57-b848-bd64e5c72859\").CommonSecurityLog \r\n    | where DeviceVendor == \"Fortinet\" or DeviceVendor == \"Palo Alto Networks\"\r\n    | where ipv4_is_private(SourceIP) and not(ipv4_is_private(DestinationIP))\r\n    | summarize NumDistinctIPs = dcount(DestinationIP), DestinationIPs = make_set(DestinationIP) by SourceIP, DeviceVendor\r\n    | where NumDistinctIPs >= 850 \r\n    | where SourceIP !in (ExcludeIPs)\r\n};\r\nunion withsource=\"TenantDetection\"  Mango",
+            "suppressionDuration": "PT5H",
+            "suppressionEnabled": false,
+        "tactics": [],
+        "displayName": "UC060328 - Outbound IPv4 network scan",
+        "enabled": true,
+        "description": "Searches private IP addresses with connections to a big amount of public IPs.",
+        "alertRuleTemplateName": null
+    },
+    "apiVersion": "2021-09-01-preview"
+}
+]
+}

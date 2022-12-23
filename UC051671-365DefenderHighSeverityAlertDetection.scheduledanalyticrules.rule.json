@@ -1,0 +1,64 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "metadata": {
+                "description": "Log Analytics Workspace Name"
+            },
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers/', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/2116771c-25a0-454d-970e-da79ee4b7377')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/2116771c-25a0-454d-970e-da79ee4b7377')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "properties": {
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": true,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "PT6H",
+                        "matchingMethod": "Selected",
+                        "groupByEntities": [
+                            "URL"
+                        ],
+                    "groupByAlertDetails": [],
+                "groupByCustomDetails": []
+            }
+        },
+        "entityMappings": [
+            {
+                "entityType": "URL",
+                "fieldMappings": [
+                    {
+                        "identifier": "Url",
+                        "columnName": "IncidentNumber"
+                    }
+                ]
+            }
+        ],
+        "queryFrequency": "PT1H",
+        "queryPeriod": "PT1H",
+        "triggerOperator": "GreaterThan",
+        "triggerThreshold": 0,
+        "eventGroupingSettings": {
+            "aggregationKind": "AlertPerResult"
+        },
+        "severity": "High",
+        "query": "let Mango = view () {\n    workspace(\"4d082081-7c2a-4f57-b848-bd64e5c72859\").SecurityIncident\n    | where ProviderName == \"Microsoft 365 Defender\"\n        and Severity == \"High\"\n        and Status in (\"New\")\n}; \nunion withsource=\"TenantDetection\"  Mango",
+        "suppressionDuration": "PT5H",
+        "suppressionEnabled": false,
+    "tactics": [],
+    "displayName": "UC051671 - 365 Defender High Severity Alert Detection",
+    "enabled": true,
+    "description": "365 Defender High Severity Alert Detection",
+    "alertRuleTemplateName": null
+},
+"apiVersion": "2021-09-01-preview"
+}
+]
+}

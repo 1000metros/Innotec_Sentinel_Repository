@@ -1,0 +1,78 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "metadata": {
+                "description": "Log Analytics Workspace Name"
+            },
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers/', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/53ac9c6d-5483-4c79-bb45-fa1e4ed4a526')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/53ac9c6d-5483-4c79-bb45-fa1e4ed4a526')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "properties": {
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": true,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "P1D",
+                        "matchingMethod": "Selected",
+                        "groupByEntities": [
+                            "IP"
+                        ],
+                    "groupByAlertDetails": [],
+                    "groupByCustomDetails": [
+                        "Cliente"
+                    ]
+                }
+            },
+            "customDetails": {
+                "Cliente": "TenantDetection"
+            },
+            "entityMappings": [
+                {
+                    "entityType": "IP",
+                    "fieldMappings": [
+                        {
+                            "identifier": "Address",
+                            "columnName": "SourceIP"
+                        }
+                    ]
+                },
+                {
+                    "entityType": "IP",
+                    "fieldMappings": [
+                        {
+                            "identifier": "Address",
+                            "columnName": "DestinationIP"
+                        }
+                    ]
+                }
+            ],
+            "queryFrequency": "PT1H",
+            "queryPeriod": "PT1H",
+            "triggerOperator": "GreaterThan",
+            "triggerThreshold": 0,
+            "eventGroupingSettings": {
+                "aggregationKind": "AlertPerResult"
+            },
+            "severity": "Medium",
+            "query": "let Mango = view () {   \r\n   \tworkspace(\"4d082081-7c2a-4f57-b848-bd64e5c72859\").CommonSecurityLog  \r\n \t| where DeviceVendor == \"Fortinet\" or DeviceVendor == \"Palo Alto Networks\"\r\n   \t| where not(ipv4_is_private(SourceIP)) and ipv4_is_private(DestinationIP)\r\n    | where DeviceAction in (\"pass\",\"allow\")\r\n   \t| summarize NumDistinctDestinationPorts = dcount(DestinationPort), DestinationPorts = make_set(DestinationPort) by SourceIP, DestinationIP, DeviceVendor\r\n   \t| where NumDistinctDestinationPorts >= 500 \r\n};\r\nunion withsource=\"TenantDetection\"  Mango",
+            "suppressionDuration": "PT5H",
+            "suppressionEnabled": false,
+        "tactics": [],
+        "displayName": "UC060330 - Inbound IPv4 accepted port scan",
+        "enabled": true,
+        "description": "Searches for connection attempts from public IPs to several ports on the same private IP.",
+        "alertRuleTemplateName": null
+    },
+    "apiVersion": "2021-09-01-preview"
+}
+]
+}

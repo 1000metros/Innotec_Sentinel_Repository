@@ -1,0 +1,69 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "metadata": {
+                "description": "Log Analytics Workspace Name"
+            },
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers/', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/3ee5a1e6-8d02-417c-a2f3-11015385505a')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/3ee5a1e6-8d02-417c-a2f3-11015385505a')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "properties": {
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": true,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "P1D",
+                        "matchingMethod": "Selected",
+                        "groupByEntities": [
+                            "Account"
+                        ],
+                    "groupByAlertDetails": [],
+                    "groupByCustomDetails": [
+                        "Client"
+                    ]
+                }
+            },
+            "customDetails": {
+                "Client": "TenantDetection"
+            },
+            "entityMappings": [
+                {
+                    "entityType": "Account",
+                    "fieldMappings": [
+                        {
+                            "identifier": "AadUserId",
+                            "columnName": "UserId"
+                        }
+                    ]
+                }
+            ],
+            "queryFrequency": "P1D",
+            "queryPeriod": "P1D",
+            "triggerOperator": "GreaterThan",
+            "triggerThreshold": 0,
+            "eventGroupingSettings": {
+                "aggregationKind": "AlertPerResult"
+            },
+            "severity": "Medium",
+            "query": "let max_delete = 3;\r\nlet Mango = view () {\r\n    workspace(\"4d082081-7c2a-4f57-b848-bd64e5c72859\").OfficeActivity\r\n\t| where OfficeWorkload =~ \"MicrosoftTeams\"\r\n\t| where Operation =~ \"TeamDeleted\" and UserType != \"Application\"\r\n\t| summarize ['Number of Teams Deleted'] = dcount(TeamName), [\"Teams Deleted\"] = make_set(TeamName) by UserId\r\n\t| where ['Number of Teams Deleted'] > max_delete\r\n\t};\r\nunion withsource=\"TenantDetection\"  Mango",
+            "suppressionDuration": "PT5H",
+            "suppressionEnabled": false,
+        "tactics": [],
+        "displayName": "UC080319 - Multiple Teams deleted by a single user",
+        "enabled": true,
+        "description": "Multiple Teams deleted by a single user",
+        "alertRuleTemplateName": null
+    },
+    "apiVersion": "2021-09-01-preview"
+}
+]
+}

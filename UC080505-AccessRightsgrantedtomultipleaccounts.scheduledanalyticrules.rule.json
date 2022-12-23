@@ -1,0 +1,69 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "metadata": {
+                "description": "Log Analytics Workspace Name"
+            },
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers/', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/ec531b4f-98db-4c7e-84e4-1e11e283e2e3')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/ec531b4f-98db-4c7e-84e4-1e11e283e2e3')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "properties": {
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": true,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "P1D",
+                        "matchingMethod": "Selected",
+                        "groupByEntities": [
+                            "Account"
+                        ],
+                    "groupByAlertDetails": [],
+                    "groupByCustomDetails": [
+                        "Cliente"
+                    ]
+                }
+            },
+            "customDetails": {
+                "Cliente": "TenantDetection"
+            },
+            "entityMappings": [
+                {
+                    "entityType": "Account",
+                    "fieldMappings": [
+                        {
+                            "identifier": "FullName",
+                            "columnName": "SubjectUser"
+                        }
+                    ]
+                }
+            ],
+            "queryFrequency": "PT2H",
+            "queryPeriod": "PT2H",
+            "triggerOperator": "GreaterThan",
+            "triggerThreshold": 0,
+            "eventGroupingSettings": {
+                "aggregationKind": "AlertPerResult"
+            },
+            "severity": "Medium",
+            "query": "let Mango = view () {   \r\n\tworkspace(\"4d082081-7c2a-4f57-b848-bd64e5c72859\").OfficeActivity\r\n    | where Operation == \"Add-MailboxPermission\" and UserType != \"DcAdmin\"\r\n  \t| extend SubjectUser = UserId\r\n    | extend TargetUser = parse_json(parse_json(Parameters)[1]).Value \r\n    | extend Mailbox = parse_json(parse_json(Parameters)[0]).Value\r\n    | extend AccessRights = parse_json(parse_json(Parameters)[2]).Value\r\n    | summarize NumGrantedPermissions = dcount(tostring(TargetUser)), UsersGrantedPermissions = make_set(tostring(TargetUser)) by SubjectUser, tostring(Mailbox)\r\n   \t| where NumGrantedPermissions >= 5\r\n};\r\nunion withsource=\"TenantDetection\"  Mango",
+            "suppressionDuration": "PT5H",
+            "suppressionEnabled": false,
+        "tactics": [],
+        "displayName": "UC080505 - Access Rights granted to multiple accounts",
+        "enabled": true,
+        "description": "Detects Access Rights granted to multiple accounts from one single account.",
+        "alertRuleTemplateName": null
+    },
+    "apiVersion": "2021-09-01-preview"
+}
+]
+}

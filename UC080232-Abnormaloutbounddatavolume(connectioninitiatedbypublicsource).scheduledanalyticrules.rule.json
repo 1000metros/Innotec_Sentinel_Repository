@@ -1,0 +1,78 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "metadata": {
+                "description": "Log Analytics Workspace Name"
+            },
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers/', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/7e555c66-f9ab-4996-a151-a6e5de735ee3')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/7e555c66-f9ab-4996-a151-a6e5de735ee3')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "properties": {
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": true,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "P1D",
+                        "matchingMethod": "Selected",
+                        "groupByEntities": [
+                            "IP"
+                        ],
+                    "groupByAlertDetails": [],
+                    "groupByCustomDetails": [
+                        "Cliente"
+                    ]
+                }
+            },
+            "customDetails": {
+                "Cliente": "TenantDetection"
+            },
+            "entityMappings": [
+                {
+                    "entityType": "IP",
+                    "fieldMappings": [
+                        {
+                            "identifier": "Address",
+                            "columnName": "SourceIP"
+                        }
+                    ]
+                },
+                {
+                    "entityType": "IP",
+                    "fieldMappings": [
+                        {
+                            "identifier": "Address",
+                            "columnName": "DestinationIP"
+                        }
+                    ]
+                }
+            ],
+            "queryFrequency": "PT1H",
+            "queryPeriod": "PT1H",
+            "triggerOperator": "GreaterThan",
+            "triggerThreshold": 0,
+            "eventGroupingSettings": {
+                "aggregationKind": "AlertPerResult"
+            },
+            "severity": "Medium",
+            "query": "let timeframe = 1h;\r\nlet Mango = view () {\r\n\tworkspace(\"4d082081-7c2a-4f57-b848-bd64e5c72859\").CommonSecurityLog \r\n\t| where (DeviceVendor == \"Fortinet\" or DeviceVendor == \"Palo Alto Networks\") and (isnotnull(SentBytes) and isnotempty(SentBytes))\r\n\t| where not(ipv4_is_private(SourceIP)) and not(ipv4_is_private(DestinationIP))\r\n\t| summarize bytes_totales = sum(SentBytes) by SourceIP, DestinationIP, bin(TimeGenerated, timeframe)\r\n\t| where (bytes_totales > 10000000000)\r\n};\r\nunion withsource=\"TenantDetection\"  Mango",
+            "suppressionDuration": "PT5H",
+            "suppressionEnabled": false,
+        "tactics": [],
+        "displayName": "UC080232 - Abnormal outbound data volume (connection initiated by public source)",
+        "enabled": true,
+        "description": "Monitors unusual volume of outgoing data started by a public IP.",
+        "alertRuleTemplateName": null
+    },
+    "apiVersion": "2021-09-01-preview"
+}
+]
+}

@@ -1,0 +1,69 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "metadata": {
+                "description": "Log Analytics Workspace Name"
+            },
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers/', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/11726ec0-8a3d-4aa3-80bb-084377381e8b')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/11726ec0-8a3d-4aa3-80bb-084377381e8b')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "properties": {
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": true,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "P1D",
+                        "matchingMethod": "Selected",
+                        "groupByEntities": [
+                            "Account"
+                        ],
+                    "groupByAlertDetails": [],
+                    "groupByCustomDetails": [
+                        "Cliente"
+                    ]
+                }
+            },
+            "customDetails": {
+                "Cliente": "TenantDetection"
+            },
+            "entityMappings": [
+                {
+                    "entityType": "Account",
+                    "fieldMappings": [
+                        {
+                            "identifier": "FullName",
+                            "columnName": "UserWhoAdds"
+                        }
+                    ]
+                }
+            ],
+            "queryFrequency": "PT12H",
+            "queryPeriod": "PT12H",
+            "triggerOperator": "GreaterThan",
+            "triggerThreshold": 0,
+            "eventGroupingSettings": {
+                "aggregationKind": "AlertPerResult"
+            },
+            "severity": "Low",
+            "query": "let timeframe=30m;\r\nlet threshold=3;   \r\nlet Mango = view () {    \r\n\tworkspace(\"4d082081-7c2a-4f57-b848-bd64e5c72859\").OfficeActivity\r\n\t| where TimeGenerated > ago(1d)\r\n\t| where Operation == \"MemberRoleChanged\"\r\n\t| mv-expand Members\r\n\t| extend RoleAdded = tostring(Members.Role)\r\n\t| extend UserAdded = tostring(Members.UPN)\r\n\t| where RoleAdded == 2\r\n\t| project TimeGenerated, RoleAdded, UserAdded, TeamName, UserId\r\n\t| summarize Number_of_Teams_Made_Owner=dcount(TeamName), Team_Names=make_set(TeamName), UserWhoAdds=make_set(UserId) by UserAdded, bin(TimeGenerated, timeframe)\r\n\t| where Number_of_Teams_Made_Owner >= threshold\r\n};\r\nunion withsource=\"TenantDetection\"  Mango",
+            "suppressionDuration": "PT5H",
+            "suppressionEnabled": false,
+        "tactics": [],
+        "displayName": "UC070354 - User made owner of multiple Teams",
+        "enabled": true,
+        "description": "User made owner of multiple Teams",
+        "alertRuleTemplateName": null
+    },
+    "apiVersion": "2021-09-01-preview"
+}
+]
+}

@@ -1,0 +1,69 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "metadata": {
+                "description": "Log Analytics Workspace Name"
+            },
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers/', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/f4f830b8-a643-4954-bf78-a010341d0bb5')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/f4f830b8-a643-4954-bf78-a010341d0bb5')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "properties": {
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": true,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "P1D",
+                        "matchingMethod": "Selected",
+                        "groupByEntities": [
+                            "Account"
+                        ],
+                    "groupByAlertDetails": [],
+                    "groupByCustomDetails": [
+                        "Cliente"
+                    ]
+                }
+            },
+            "customDetails": {
+                "Cliente": "TenantDetection"
+            },
+            "entityMappings": [
+                {
+                    "entityType": "Account",
+                    "fieldMappings": [
+                        {
+                            "identifier": "FullName",
+                            "columnName": "UserId"
+                        }
+                    ]
+                }
+            ],
+            "queryFrequency": "PT8H",
+            "queryPeriod": "PT8H",
+            "triggerOperator": "GreaterThan",
+            "triggerThreshold": 0,
+            "eventGroupingSettings": {
+                "aggregationKind": "AlertPerResult"
+            },
+            "severity": "Medium",
+            "query": "let Mango = view () {\n    let ExclusionList = Mango_UC080507_exclusion_users\n        | project SubjectUser;\n    workspace(\"4d082081-7c2a-4f57-b848-bd64e5c72859\").OfficeActivity\n    | where Operation == \"Add-MailboxPermission\" and UserType != \"DcAdmin\"\n    | extend SubjectUser = UserId\n    | extend isnotnull(Parameters)\n    | extend TargetUser = parse_json(parse_json(Parameters)[1]).Value \n    | extend Mailbox = parse_json(parse_json(Parameters)[0]).Value\n    | extend AccessRights = parse_json(parse_json(Parameters)[2]).Value\n    | where AccessRights == \"FullAccess\"\t\n    | where SubjectUser !in (ExclusionList)\n};\nunion withsource=\"TenantDetection\"  Mango\n",
+            "suppressionDuration": "PT5H",
+            "suppressionEnabled": false,
+        "tactics": [],
+        "displayName": "UC080507 - FullAccess granted on a Mailbox",
+        "enabled": true,
+        "description": "FullAccess granted on a Mailbox",
+        "alertRuleTemplateName": null
+    },
+    "apiVersion": "2021-09-01-preview"
+}
+]
+}

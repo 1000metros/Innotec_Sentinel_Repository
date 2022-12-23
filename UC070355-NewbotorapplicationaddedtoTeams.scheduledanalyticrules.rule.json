@@ -1,0 +1,69 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "metadata": {
+                "description": "Log Analytics Workspace Name"
+            },
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers/', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/b05994c8-e79c-47dd-bb4f-2f3bdde74a27')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/b05994c8-e79c-47dd-bb4f-2f3bdde74a27')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "properties": {
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": true,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "P1D",
+                        "matchingMethod": "Selected",
+                        "groupByEntities": [
+                            "Account"
+                        ],
+                    "groupByAlertDetails": [],
+                    "groupByCustomDetails": [
+                        "Cliente"
+                    ]
+                }
+            },
+            "customDetails": {
+                "Cliente": "TenantDetection"
+            },
+            "entityMappings": [
+                {
+                    "entityType": "Account",
+                    "fieldMappings": [
+                        {
+                            "identifier": "FullName",
+                            "columnName": "AccountCustomEntity"
+                        }
+                    ]
+                }
+            ],
+            "queryFrequency": "P1D",
+            "queryPeriod": "P1D",
+            "triggerOperator": "GreaterThan",
+            "triggerThreshold": 0,
+            "eventGroupingSettings": {
+                "aggregationKind": "AlertPerResult"
+            },
+            "severity": "Low",
+            "query": "let starttime = ago(1d);\r\nlet endtime = now();\r\nlet lookback = starttime - 31d; \r\nlet historical_AppDistribution_mango = Mango_UC070355_exclusion_AppDistributionMode | project AppDistributionMode;\r\nlet Mango = view () {\r\n\tlet historical_addons_mango=(\r\n    \tworkspace(\"4d082081-7c2a-4f57-b848-bd64e5c72859\").OfficeActivity\r\n\t\t| where TimeGenerated between(lookback..starttime)\r\n\t\t| where OfficeWorkload =~ \"MicrosoftTeams\"\r\n\t\t| where isnotempty(AddonName)\r\n\t\t| project AddonName);\r\n\tworkspace(\"4d082081-7c2a-4f57-b848-bd64e5c72859\").OfficeActivity\r\n\t| where TimeGenerated between(starttime..endtime)\r\n\t| where OfficeWorkload =~ \"MicrosoftTeams\" and Operation == \"AppInstalled\"\r\n\t| where isnotempty(AddonName)\r\n\t| where AddonName !in (historical_addons_mango)\r\n\t| where AppDistributionMode !in (historical_AppDistribution_mango)\r\n\t| extend timestamp = TimeGenerated, AccountCustomEntity = UserId\r\n};\r\nunion withsource=\"TenantDetection\"  Mango",
+            "suppressionDuration": "PT5H",
+            "suppressionEnabled": false,
+        "tactics": [],
+        "displayName": "UC070355 - New bot or application added to Teams",
+        "enabled": true,
+        "description": "New bot or application added to Teams",
+        "alertRuleTemplateName": null
+    },
+    "apiVersion": "2021-09-01-preview"
+}
+]
+}
